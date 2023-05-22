@@ -69,6 +69,30 @@ async function getRecipes() {
   // A1. TODO - Check local storage to see if there are any recipes.
   //            If there are recipes, return them.
   /**************************/
+  let recipeList = localStorage.getItem('recipes');
+  if (recipeList != null) { //if already recipes in localStorage
+    recipeList = recipeList.split("},{");
+    if (recipeList.length == 1) { //if only 1 recipe in list, process single entry list
+      recipeList[0].slice(1);
+      recipeList[0].substring(0,recipeList[j].length-1);
+      JSON.parse(recipeList[0]);
+    }
+    else {  //otherwise, process like a list
+      for (let j = 0; j < recipeList.length; j++) {
+        if (j == 0) {
+          recipeList[j] = JSON.parse(recipeList[j].slice(1) + '}');
+        }
+        else if (j == (recipeList.length - 1)) {
+          recipeList[j] = JSON.parse('{' + recipeList[j].substring(0,recipeList[j].length-1));
+        }
+        else {
+          recipeList[j] = JSON.parse('{' + recipeList[j] + '}');
+        }
+      }
+    }
+    return recipeList;
+  }
+
   // The rest of this method will be concerned with requesting the recipes
   // from the network
   // A2. TODO - Create an empty array to hold the recipes that you will fetch
@@ -100,6 +124,26 @@ async function getRecipes() {
   //            resolve() method.
   // A10. TODO - Log any errors from catch using console.error
   // A11. TODO - Pass any errors to the Promise's reject() function
+  else {  //no recipes in localStorage
+    let newRecipeList = [];
+    const recipePromise = new Promise(async (resolve,reject) => {
+      for (let i = 0; i < RECIPE_URLS.length; i++) {
+        try {
+          let URLFetch = await fetch(RECIPE_URLS[i]);
+          let fetchJSON = await URLFetch.json();
+          newRecipeList.push(fetchJSON);
+          // console.log(newRecipeList);
+          saveRecipesToStorage(newRecipeList);
+          resolve(newRecipeList);
+        }
+        catch(err) {
+          console.error(err);
+          reject(RECIPE_URLS[i]);
+        }
+      }
+    });
+    return newRecipeList;
+  }
 }
 
 /**
